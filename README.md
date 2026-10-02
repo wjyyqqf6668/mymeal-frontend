@@ -1,70 +1,76 @@
-# Getting Started with Create React App
+# MyMeal — Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+React interface for MyMeal, an online food-ordering application with menu browsing, cart management, checkout, and customer/merchant order views.
 
-## Available Scripts
+**Backend:** [mymeal-backend](https://github.com/wjyyqqf6668/mymeal-backend)
 
-In the project directory, you can run:
+## Features and engineering highlights
 
-### `npm start`
+- **Account-aware UI:** restore the session, sign up, sign in, and sign out; show restaurant order controls to accounts with the merchant role.
+- **Cart and menu workflows:** browse restaurants, select menu items, and update the cart.
+- **Checkout recovery:** preserve a pending request and its idempotency key in browser storage. An uncertain network result can be retried with the same request rather than creating a fresh order attempt.
+- **Price confirmation:** show updated prices returned by the backend and require confirmation before submitting a new request with a new key.
+- **Order history:** view order details, cancel eligible orders, and accept/complete restaurant orders when authorized by the backend.
+- **Session and CSRF handling:** centralize same-origin API requests, token acquisition, authentication errors, timeouts, and structured error responses.
+- **Focused verification scripts:** check API behavior, checkout state transitions, and order actions with mocked dependencies.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Stack
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+React 18, JavaScript, Ant Design 4, and Create React App (`react-scripts` 4). `package-lock.json` records dependencies. The local directory/package retains its original name, `doordash-app`; the displayed application is MyMeal.
 
-### `npm test`
+## Run locally
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Start the [backend](https://github.com/wjyyqqf6668/mymeal-backend) and PostgreSQL first. The frontend expects the backend on `http://localhost:8080`.
 
-### `npm run build`
+In Windows PowerShell, with Node.js and npm installed:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```powershell
+git clone https://github.com/wjyyqqf6668/mymeal-frontend.git
+Set-Location mymeal-frontend
+npm ci
+npm start
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Use Node.js 20 or newer for the declared `cross-env` dependency. The existing scripts include an OpenSSL compatibility option for the older Create React App toolchain; the repository does not migrate that toolchain.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Open `http://localhost:3000`. `package.json` configures a development proxy to the backend, so API requests can use relative paths and session cookies. No cloud credentials or API keys are needed in the frontend.
 
-### `npm run eject`
+Register a customer account through the interface to try ordering. Merchant views require a role and restaurant assignment configured in the backend; regular signup does not grant merchant access.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Source layout
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+| Path | Purpose |
+| --- | --- |
+| `src/components/` | Login/signup, menu/cart, and order interfaces |
+| `src/hooks/` | Authentication, cart, and checkout integration |
+| `src/checkout/checkoutFlow.js` | Checkout state transitions and retry persistence |
+| `src/orders/orderActions.js` | Order action helpers |
+| `src/utils.js` | API requests, CSRF, deadlines, and error handling |
+| `verification/` | Focused Node-based checks |
+| `public/` | Static source assets required by Create React App |
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Verification
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Run the existing focused checks from the repository root:
 
-## Learn More
+```powershell
+node .\verification\check_api.mjs
+node .\verification\check_checkout.mjs
+node .\verification\check_orders.mjs
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+These checks use mocked responses or dependencies; they do not replace browser testing or backend/database integration tests. The default `App.test.js` remains a Create React App scaffold and needs updating before treating `npm test` as the project's regression suite.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Production build
 
-### Code Splitting
+```powershell
+npm run build
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+`build/` contains generated output and is excluded from Git. A production deployment must serve the UI and API with suitable same-origin routing; the development `proxy` setting is not embedded as a production reverse proxy. To serve the UI from Spring Boot, copy the generated build contents into the backend's `src/main/resources/public/` directory before packaging its JAR.
 
-### Analyzing the Bundle Size
+## Scope
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+This is a portfolio/learning application. Checkout creates orders without charging real payment methods. The backend is responsible for authorization, current-price validation, transactions, and order state enforcement.
 
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Keep `package-lock.json`, `public/`, and the source files in Git. Exclude dependency folders, generated builds, environment files, and credentials.
